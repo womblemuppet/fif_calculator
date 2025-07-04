@@ -41,7 +41,7 @@ trades_file = File.read("input/trades.csv")
 trades = CSV.parse(trades_file, headers: true, converters: big_decimal_converter)
 
 # Quick sales are trades that are bought and sold in the same year at a profit
-# For each quick sale, you can use the lower of the average cost method or actual gain method
+# For each quick sale, you can use the lower of the peak holding method or actual gain method
 #
 
 quick_sales_trades_by_symbol = trades
@@ -55,7 +55,7 @@ quick_sales_trades_by_symbol = trades
 puts "Quick sales:"
 puts quick_sales_trades_by_symbol.keys.join(", ")
 
-fair_dividend_rates_by_symbol = quick_sales_trades_by_symbol.each_with_object({}) do |(symbol, trades), hash|
+quick_sales_calcs_by_symbol = quick_sales_trades_by_symbol.each_with_object({}) do |(symbol, trades), hash|
   hash[symbol] = {}
   puts "\n", symbol
 
@@ -118,37 +118,31 @@ fair_dividend_rates_by_symbol = quick_sales_trades_by_symbol.each_with_object({}
     hash[symbol][:actual_gain_method_value]
   ].min
 
-  hash[symbol][:fair_dividend_rate] = [0, minimum_of_both_methods].max
+  hash[symbol][:quick_sales_adjustment] = [0, minimum_of_both_methods].max
 end
 
-puts "\n", "fair_dividend_rates_by_symbol:"
-fair_dividend_rates_by_symbol.each do |symbol, fdr_calculations|
+puts "\n", "quick_sales_calcs_by_symbol:"
+quick_sales_calcs_by_symbol.each do |symbol, quick_sales_calculations|
   puts symbol + ":"
   puts "peak_holding_method_value:"
-  puts format("%5f", fdr_calculations[:peak_holding_method_value])
+  puts format("%5f", quick_sales_calculations[:peak_holding_method_value])
   puts "actual_gain_method_value:"
-  puts format("%5f", fdr_calculations[:actual_gain_method_value])
-  puts "using #{format("%5f", fdr_calculations[:fair_dividend_rate])}"
+  puts format("%5f", quick_sales_calculations[:actual_gain_method_value])
+  puts "using #{format("%5f", quick_sales_calculations[:quick_sales_adjustment])}"
 end
-exit
 
-# quick_sales_total = quick_sales_trades_by_symbol
-#   .values
-#   .flatten(1) # need to specify depth = 1 as CSV::Row implements to_ary
-#   .sum { |trade| BigDecimal(trade["Notional Value (NZD)"]) }
+
+quick_sales_total = quick_sales_calcs_by_symbol
+  .values
+  .sum { |quick_sales_calculations| quick_sales_calculations[:quick_sales_adjustment]  }
+
+puts "\n", "5% of total NZD opening position:"
+puts format("%5f", five_percent_of_nzd_sum)
 
 puts "Quick sales total"
 puts format("%5f", quick_sales_total)
 
-# will_ignore_quick_sales_total = quick_sales_total < 0 ## wrong I think
-
-# puts "Ignoring quick sales total as it is negative" if will_ignore_quick_sales_total
-
-final_total = if will_ignore_quick_sales_total
-  five_percent_of_nzd_sum
-else
-  five_percent_of_nzd_sum - quick_sales_total
-end
+final_total = five_percent_of_nzd_sum + quick_sales_total
 
 puts "Final total:"
 puts format("%5f", final_total)
