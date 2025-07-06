@@ -147,5 +147,6 @@ final_total = five_percent_of_nzd_sum + quick_sales_total
 puts "Final total:"
 puts format("%5f", final_total)
 
-
+puts "NOTE"
+puts "atm dagxx (Money Market Fund) dividends ignored, running total will be wrong"
 puts "done"
